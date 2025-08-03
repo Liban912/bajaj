@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "949529044701",
+    "project_id": "bajaj-updated",
+    "storage_bucket": "bajaj-updated.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949529044701:android:ccafa7bd7b89d0cb615d34",
+        "android_client_info": {
+          "package_name": "com.example.bajaj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9sNHx9wdT9wHV41JBFJCIjBDZxJnPjmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

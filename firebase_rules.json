@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "location": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['latitude', 'longitude', 'timestamp']) && 
+                   newData.child('latitude').isNumber() && 
+                   newData.child('longitude').isNumber() && 
+                   newData.child('timestamp').isNumber() &&
+                   newData.child('latitude').val() >= -90 && 
+                   newData.child('latitude').val() <= 90 &&
+                   newData.child('longitude').val() >= -180 && 
+                   newData.child('longitude').val() <= 180"
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+} 
