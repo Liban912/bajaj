@@ -1,0 +1,144 @@
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// GPS setup
+static const int RXPin = 18, TXPin = 19;
+static const uint32_t GPSBaud = 9600;
+TinyGPSPlus gps;
+SoftwareSerial ss(RXPin, TXPin);
+
+// ADXL345 address
+#define ADXL345_ADDR 0x53
+
+// I2C LCD setup (change address if needed)
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // address, cols, rows
+
+// Pin definitions
+#define BUZZER_PIN 14
+#define RED_LED 12
+#define GREEN_LED 13
+
+void setup() {
+  Serial.begin(115200);
+  ss.begin(GPSBaud);
+  Serial.println("Type '1' to get GPS data:");
+
+  // I2C init (for ADXL and LCD on pins 4, 5)
+ // Wire.begin();
+
+  // LCD init
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("System Starting...");
+  delay(1000);
+  lcd.clear();
+
+  // Output pin modes
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
+
+  // Indicate system is ready
+  digitalWrite(GREEN_LED, HIGH);
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
+  lcd.setCursor(0, 1);
+  lcd.print("Waiting input...");
+  delay(1500);
+  lcd.clear();
+
+    Wire.begin();
+  // ADXL345 setup
+  Wire.beginTransmission(ADXL345_ADDR);
+  Wire.write(0x2D);  // Power control register
+  Wire.write(0x08);  // Enable measurement mode
+  Wire.endTransmission();
+}
+
+void loop() {
+ 
+  if (Serial.available()) {
+    char input = Serial.read();
+    if (input == '1') {
+      getGPS();
+    }
+  }else{
+   checkADXL345();
+  }
+}
+
+void getGPS() {
+  unsigned long start = millis();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Getting GPS...");
+
+  while (millis() - start < 2000) {
+    while (ss.available()) {
+      gps.encode(ss.read());
+    }
+  }
+
+  lcd.clear();
+  if (gps.location.isValid()) {
+    float lat = gps.location.lat();
+    float lng = gps.location.lng();
+    Serial.print("LATITUDE: ");
+    Serial.println(lat, 6);
+    Serial.print("LONGITUDE: ");
+    Serial.println(lng, 6);
+
+    lcd.setCursor(0, 0);
+    lcd.print("Lat:");
+    lcd.print(lat, 2);
+    lcd.setCursor(0, 1);
+    lcd.print("Lng:");
+    lcd.print(lng, 2);
+  } else {
+    Serial.println("INVALID GPS DATA or NO FIX");
+    lcd.setCursor(0, 0);
+    lcd.print("GPS Error/No Fix");
+  }
+}
+
+void checkADXL345() {
+  int16_t accelX, accelY, accelZ;
+
+  Wire.beginTransmission(ADXL345_ADDR);
+  Wire.write(0x32);
+  Wire.endTransmission(false);
+  Wire.requestFrom(ADXL345_ADDR, 6, true);
+
+  accelX = Wire.read() | (Wire.read() << 8);
+  accelY = Wire.read() | (Wire.read() << 8);
+  accelZ = Wire.read() | (Wire.read() << 8);
+
+  delay(150);
+   //Serial.print("X= ");Serial.print(accelX);  Serial.print("  Y= ");Serial.print(accelY);  Serial.print("    Z= ");Serial.println(accelZ);
+ delay(500);
+  if (accelX > -22 && accelX < 70 && accelY > -29 && accelY < 48 && accelZ > 180 && accelZ < 280) {
+    Serial.println("save");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Status: Stable");
+    lcd.setCursor(0, 1);
+    lcd.print("Motion: Normal");
+
+    digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(RED_LED, LOW);
+    delay(100);
+  } else {
+    Serial.println("wala dhacay mootadii");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Alert: Motion!");
+    lcd.setCursor(0, 1);
+    lcd.print("Check system!");
+
+    digitalWrite(BUZZER_PIN, HIGH);
+    digitalWrite(RED_LED, HIGH);
+  }
+}
